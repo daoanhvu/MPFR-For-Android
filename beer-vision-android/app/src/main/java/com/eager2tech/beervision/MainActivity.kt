@@ -6,11 +6,13 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.util.Size
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private var imageCapture: ImageCapture? = null
 //    private var imageAnalysis ImageAnalysis? = null
     private val REQUEST_CODE_CAMERA = 101
+    private lateinit var imageAnalyzer: ImageAnalyzer
 
     private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         var permissionGranted = true
@@ -52,6 +55,8 @@ class MainActivity : ComponentActivity() {
         binding = MainCamLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        imageAnalyzer = ImageAnalyzer()
+
         if (allPermissionGranted()) {
             startCamera()
         } else {
@@ -70,7 +75,6 @@ class MainActivity : ComponentActivity() {
             // Use to bind the lifecycle of camera to the lifecycle owner
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-
             // Preview
             val preview = Preview.Builder()
                 .build()
@@ -78,12 +82,23 @@ class MainActivity : ComponentActivity() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
 
+            imageCapture = ImageCapture.Builder().build()
+
+            val imageAnalyer = ImageAnalysis
+                .Builder()
+                .setTargetResolution(Size(640, 480)) // Adjust resolution as needed
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .build()
+                .also {
+                    it.setAnalyzer(ContextCompat.getMainExecutor(this), this.imageAnalyzer)
+                }
+
             // Send back camera as a default
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-//                cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture)
+//                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyer)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
