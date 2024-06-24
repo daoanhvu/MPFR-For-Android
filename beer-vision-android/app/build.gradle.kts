@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,6 +20,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val localProperties = gradleLocalProperties(rootDir, providers)
+        val geminiApiKey = localProperties.getProperty("geminiApiKey")
+        val beerVisionProject = localProperties.getProperty("BEER_VISION_KEY")
+        buildConfigField("String", "GEMINI_API_KEY", "\"" + geminiApiKey + "\"")
+        buildConfigField("String", "BEER_VISION_KEY", "\"" + beerVisionProject + "\"")
     }
 
     buildTypes {
@@ -37,6 +45,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        buildConfig = true
         viewBinding = true
     }
     composeOptions {
@@ -44,7 +53,9 @@ android {
     }
     packaging {
         resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+//            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/{AL2.0,LGPL2.1,DEPENDENCIES,INDEX.LIST}"
+//            excludes += "/META-INF/INDEX.LIST"
         }
     }
 }
@@ -72,7 +83,9 @@ dependencies {
     implementation("androidx.camera:camera-video:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
-    implementation("com.google.ai.client.generativeai:generativeai:0.8.0")
+    implementation ("com.google.cloud:google-cloud-vision:3.43.0")
+//    implementation("com.google.ai.client.generativeai:generativeai:0.8.0")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
