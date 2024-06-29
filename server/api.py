@@ -23,8 +23,6 @@ def do_detect(model, im):
     confs = result[0].boxes.conf.cpu().numpy()
     clss = result[0].boxes.cls.cpu().numpy()
 
-    print(clss)
-
     detection_result = []
 
     for xyxy, conf, cls in zip(xyxys, confs, clss):

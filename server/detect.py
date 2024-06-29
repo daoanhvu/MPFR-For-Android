@@ -5,6 +5,30 @@ import numpy as np
 from PIL import ImageGrab
 
 
+def do_detect(model, im):
+    result = model(im)
+
+    xyxys = result[0].boxes.xyxy.cpu().numpy()
+
+    confs = result[0].boxes.conf.cpu().numpy()
+    clss = result[0].boxes.cls.cpu().numpy()
+
+    detection_result = []
+
+    for xyxy, conf, cls in zip(xyxys, confs, clss):
+        x1, y1, x2, y2 = xyxy[0], xyxy[1], xyxy[2], xyxy[3]
+
+        detection_result.append({"x1": float(x1),
+                                 "y1": float(y1),
+                                 "x2": float(x2),
+                                 "y2": float(y2),
+                                 "confidence": float(conf),
+                                 "className": int(cls)
+                                 })
+
+    return detection_result
+
+
 def test_detect(model, im):
     results = model(im)
     detections = results.pandas().xyxy[0]
