@@ -54,8 +54,7 @@ android {
     packaging {
         resources {
 //            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "/META-INF/{AL2.0,LGPL2.1,DEPENDENCIES,INDEX.LIST}"
-//            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/{AL2.0,LGPL2.1,DEPENDENCIES,INDEX.LIST,io.netty.versions.properties}"
         }
     }
 }
@@ -83,6 +82,10 @@ dependencies {
     implementation("androidx.camera:camera-video:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
+    implementation ("io.grpc:grpc-okhttp:1.62.2")
+    implementation ("io.grpc:grpc-netty:1.62.2")
+    implementation ("io.grpc:grpc-stub:1.62.2")
+    implementation ("io.grpc:grpc-netty-shaded:1.62.2")
     implementation ("com.google.cloud:google-cloud-vision:3.43.0")
 //    implementation("com.google.ai.client.generativeai:generativeai:0.8.0")
 
