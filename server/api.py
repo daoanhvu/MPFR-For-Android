@@ -7,29 +7,38 @@ from flask import Flask, request, json, jsonify
 from flask_restful import Resource, Api
 from PIL import Image
 
+from ultralytics import YOLO
+
 app = Flask(__name__)
 api = Api(app)
 
-model = torch.hub.load("ultralytics/yolov5", "yolov5s", device=0)
+model = YOLO("yolov8n.pt")
 
 
 def do_detect(model, im):
-    results = model(im)
-    detections = results.pandas().xyxy[0]
-    detection_results = []
-    for index, row in detections.iterrows():
-        x1, y1, x2, y2, confidence, class_id, name = int(row['xmin']), int(row['ymin']), int(
-            row['xmax']), int(row['ymax']), row['confidence'], row['class'], row['name']
-        if confidence > 0.3:
-            detection_results.append({
-                "x1": x1,
-                "y1": y1,
-                "x2": x2,
-                "y2": y2,
-                "confidence": confidence,
-                "className": name})
+    result = model(im)
 
-    return detection_results
+    xyxys = result[0].boxes.xyxy.cpu().numpy()
+
+    confs = result[0].boxes.conf.cpu().numpy()
+    clss = result[0].boxes.cls.cpu().numpy()
+
+    print(clss)
+
+    detection_result = []
+
+    for xyxy, conf, cls in zip(xyxys, confs, clss):
+        x1, y1, x2, y2 = xyxy[0], xyxy[1], xyxy[2], xyxy[3]
+
+        detection_result.append({"x1": float(x1),
+                                 "y1": float(y1),
+                                 "x2": float(x2),
+                                 "y2": float(y2),
+                                 "confidence": float(conf),
+                                 "className": int(cls)
+                                 })
+
+    return detection_result
 
 
 @app.route('/detect', methods=['POST'])
@@ -53,6 +62,7 @@ def upload_image():
             'serviceCode': 0,
             'detections': results
         }
+        print(responseBody)
         return app.response_class(status=statusCode, response=json.dumps(responseBody))
     else:
         return app.response_class(status=statusCode)
