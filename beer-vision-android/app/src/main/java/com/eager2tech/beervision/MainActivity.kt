@@ -22,10 +22,10 @@ import com.eager2tech.beervision.network.BeerVisionAPI
 import com.eager2tech.beervision.usecases.detect.DetectAPIService
 import com.eager2tech.beervision.usecases.detect.ImageAnalyzer
 //import com.google.ai.client.generativeai.GenerativeModel
-import com.google.api.gax.core.FixedCredentialsProvider
-import com.google.auth.oauth2.ServiceAccountCredentials
-import com.google.cloud.vision.v1.ImageAnnotatorClient
-import com.google.cloud.vision.v1.ImageAnnotatorSettings
+//import com.google.api.gax.core.FixedCredentialsProvider
+//import com.google.auth.oauth2.ServiceAccountCredentials
+//import com.google.cloud.vision.v1.ImageAnnotatorClient
+//import com.google.cloud.vision.v1.ImageAnnotatorSettings
 import java.security.KeyStore
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var imageAnalyzer: ImageAnalyzer
 
 //    private lateinit var generativeModel: GenerativeModel
-    private lateinit var imageAnnotatorClient: ImageAnnotatorClient
+//    private lateinit var imageAnnotatorClient: ImageAnnotatorClient
 
     private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         var permissionGranted = true
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
         detectAPIService = BeerVisionAPI.getRetrofit().create(DetectAPIService::class.java)
 
-        imageAnnotatorClient = createImageAnnotatorClient()
+//        imageAnnotatorClient = createImageAnnotatorClient()
 
         imageAnalyzer = ImageAnalyzer(detectAPIService).also { it ->
             it.detectResults.observeForever { result ->
@@ -101,18 +101,18 @@ class MainActivity : ComponentActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
-    private fun createImageAnnotatorClient(): ImageAnnotatorClient {
-        val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
-        val inputStream = resources.openRawResource(R.raw.beer_vision_credentials)
-        val credentials = ServiceAccountCredentials.fromStream(inputStream)
-
-        val imageAnnotatorSettings = ImageAnnotatorSettings
-            .newBuilder()
-            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
-            .build()
-        return ImageAnnotatorClient.create(imageAnnotatorSettings)
-    }
+//    private fun createImageAnnotatorClient(): ImageAnnotatorClient {
+//        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+//        keyStore.load(null)
+//        val inputStream = resources.openRawResource(R.raw.beer_vision_credentials)
+//        val credentials = ServiceAccountCredentials.fromStream(inputStream)
+//
+//        val imageAnnotatorSettings = ImageAnnotatorSettings
+//            .newBuilder()
+//            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+//            .build()
+//        return ImageAnnotatorClient.create(imageAnnotatorSettings)
+//    }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)

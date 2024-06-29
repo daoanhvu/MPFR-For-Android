@@ -38,6 +38,8 @@ class ImageAnalyzer(private val detectAPIService: DetectAPIService) : ImageAnaly
     }
 
     override fun analyze(imageProxy: ImageProxy) {
+        val width = imageProxy.width
+        val height = imageProxy.height
         val bytes = convertImageProxyToBitmap(imageProxy, 80)
         val mediaType = "image/jpeg".toMediaTypeOrNull()
         val request = bytes.toRequestBody(mediaType, 0, bytes.size)
@@ -48,7 +50,7 @@ class ImageAnalyzer(private val detectAPIService: DetectAPIService) : ImageAnaly
         apiCall.enqueue(object: Callback<DetectResponseModel> {
             override fun onResponse(call: Call<DetectResponseModel>, response: Response<DetectResponseModel>) {
                 response.body() ?. let { responseBody ->
-                    detectResults.postValue(DetectionsModel(responseBody.detections))
+                    detectResults.postValue(DetectionsModel(width, height, responseBody.detections))
                 }
             }
 
