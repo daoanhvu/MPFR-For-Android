@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import android.util.Size
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,6 +18,15 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.eager2tech.beervision.databinding.MainCamLayoutBinding
+import com.eager2tech.beervision.network.BeerVisionAPI
+import com.eager2tech.beervision.usecases.detect.DetectAPIService
+import com.eager2tech.beervision.usecases.detect.ImageAnalyzer
+//import com.google.ai.client.generativeai.GenerativeModel
+//import com.google.api.gax.core.FixedCredentialsProvider
+//import com.google.auth.oauth2.ServiceAccountCredentials
+//import com.google.cloud.vision.v1.ImageAnnotatorClient
+//import com.google.cloud.vision.v1.ImageAnnotatorSettings
+import java.security.KeyStore
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
@@ -32,8 +40,11 @@ class MainActivity : ComponentActivity() {
     private lateinit var capturedImage: ImageView
     private var imageCapture: ImageCapture? = null
 //    private var imageAnalysis ImageAnalysis? = null
-    private val REQUEST_CODE_CAMERA = 101
+    private lateinit var detectAPIService: DetectAPIService
     private lateinit var imageAnalyzer: ImageAnalyzer
+
+//    private lateinit var generativeModel: GenerativeModel
+//    private lateinit var imageAnnotatorClient: ImageAnnotatorClient
 
     private val activityResultLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         var permissionGranted = true
@@ -55,7 +66,28 @@ class MainActivity : ComponentActivity() {
         binding = MainCamLayoutBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        imageAnalyzer = ImageAnalyzer()
+        detectAPIService = BeerVisionAPI.getRetrofit().create(DetectAPIService::class.java)
+
+//        imageAnnotatorClient = createImageAnnotatorClient()
+
+        imageAnalyzer = ImageAnalyzer(detectAPIService).also { it ->
+            it.detectResults.observeForever { result ->
+                // TODO: Update UI here
+                val numberPerson = result.detections.count { item -> item.className == "person" }
+                if (numberPerson > 0) {
+                    binding.tvNotice.text = "There are ${numberPerson} people here!"
+                } else {
+                    binding.tvNotice.text = ""
+                }
+//                val prompt = Promp
+//                generativeModel.
+                binding.bbOverlay.setDetections(result)
+                Log.i("MainActivity", result.toString())
+            }
+        }
+
+//        generativeModel = GenerativeModel("generative-text-v1/models/gemini-1.5",
+//            apiKey = com.eager2tech.beervision.BuildConfig.GEMINI_API_KEY)
 
         if (allPermissionGranted()) {
             startCamera()
@@ -68,6 +100,19 @@ class MainActivity : ComponentActivity() {
         binding.btnVideCapture.setOnClickListener { captureVideo() }
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
+
+//    private fun createImageAnnotatorClient(): ImageAnnotatorClient {
+//        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+//        keyStore.load(null)
+//        val inputStream = resources.openRawResource(R.raw.beer_vision_credentials)
+//        val credentials = ServiceAccountCredentials.fromStream(inputStream)
+//
+//        val imageAnnotatorSettings = ImageAnnotatorSettings
+//            .newBuilder()
+//            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+//            .build()
+//        return ImageAnnotatorClient.create(imageAnnotatorSettings)
+//    }
 
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
@@ -86,8 +131,11 @@ class MainActivity : ComponentActivity() {
 
             val imageAnalyer = ImageAnalysis
                 .Builder()
-                .setTargetResolution(Size(640, 480)) // Adjust resolution as needed
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+//                .setTargetResolution(Size(640, 480)) // Adjust resolution as needed
+//                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888)
+//                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .also {
                     it.setAnalyzer(ContextCompat.getMainExecutor(this), this.imageAnalyzer)
@@ -98,7 +146,7 @@ class MainActivity : ComponentActivity() {
             try {
                 cameraProvider.unbindAll()
 //                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyer)
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyer)
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }

@@ -21,7 +21,13 @@ def do_detect(model, im):
         x1, y1, x2, y2, confidence, class_id, name = int(row['xmin']), int(row['ymin']), int(
             row['xmax']), int(row['ymax']), row['confidence'], row['class'], row['name']
         if confidence > 0.3:
-            detection_results.append({x1, y1, x2, y2, confidence, name})
+            detection_results.append({
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2,
+                "confidence": confidence,
+                "className": name})
 
     return detection_results
 
@@ -37,12 +43,14 @@ def upload_image():
     if file:
         image = Image.open(file.stream)
         image_data = np.array(image)
-        results = do_detect(image_data)
+        results = do_detect(model, image_data)
+        # print(results)
         statusCode = 200
 
     if statusCode == 200:
         # responsedAt = datetime.now(datetime.UTC)
         responseBody = {
+            'serviceCode': 0,
             'detections': results
         }
         return app.response_class(status=statusCode, response=json.dumps(responseBody))
@@ -50,5 +58,10 @@ def upload_image():
         return app.response_class(status=statusCode)
 
 
+@app.route('/', methods=['GET'])
+def say_hello():
+    return app.response_class(status=200, response="Hi There!")
+
+
 if __name__ == '__main__':
-    app.run(port=10123)
+    app.run(host='0.0.0.0', port=9099)

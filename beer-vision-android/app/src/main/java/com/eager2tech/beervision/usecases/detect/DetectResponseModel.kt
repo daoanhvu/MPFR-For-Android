@@ -1,4 +1,6 @@
 package com.eager2tech.beervision.usecases.detect
 
-class DetectResponseModel {
-}
+data class DetectResponseModel(
+    val serviceCode: Int,
+    val detections: List<DetectionModel>
+)
