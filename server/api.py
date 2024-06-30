@@ -14,7 +14,8 @@ from ultralytics import YOLO
 app = Flask(__name__)
 api = Api(app)
 
-model = YOLO("yolov8n.pt")
+model = YOLO(
+    "beer-vision/server/runs/content/runs/detect/train3/weights/best.pt")
 
 PROCESSED_IMAGES = './processedImages/'
 lock_file_name = './process.lock'
